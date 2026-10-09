@@ -1,0 +1,30 @@
+name: Bug report
+description: Codex can't use Arc, or a command fails.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Include any error message from Codex.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `python3 arc_browser_use.py doctor`
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: build
+    attributes:
+      label: Output of `python3 arc_browser_use.py build`, if it failed
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Arc version (Arc menu → About Arc), ChatGPT desktop app version, and macOS version.
+      placeholder: Arc 1.167.1, ChatGPT 26.1002, macOS 26.1
+    validations:
+      required: true

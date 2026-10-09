@@ -1,0 +1,41 @@
+# Builds the newest ChatGPT extension from the Chrome Web Store every week.
+# If a patch no longer applies, or the version isn't in TESTED_VERSIONS, the
+# job fails and opens an issue so that users and maintainers can see it.
+name: Upstream extension
+
+on:
+  schedule:
+    - cron: "17 14 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the newest store version
+        run: /usr/bin/python3 arc_browser_use.py build --output "$RUNNER_TEMP/extension"
+      - name: Check that the version is tested
+        run: |
+          /usr/bin/python3 - "$RUNNER_TEMP/extension/arc-browser-use.json" <<'PY'
+          import json, sys
+          import arc_browser_use
+          version = json.load(open(sys.argv[1]))["extensionVersion"]
+          print(f"Built ChatGPT extension {version}")
+          if version not in arc_browser_use.TESTED_VERSIONS:
+              sys.exit(f"Version {version} isn't in TESTED_VERSIONS. Test it in Arc, then add it.")
+          PY
+      - name: Open an issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="The newest ChatGPT extension needs attention"
+          open=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq length)
+          if [ "$open" = "0" ]; then
+            gh issue create --title "$title" --body "The weekly build of the newest Chrome Web Store version failed: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID. See \"When a patch fails\" in SETUP.md."
+          fi
